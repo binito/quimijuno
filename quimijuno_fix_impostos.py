@@ -84,7 +84,7 @@ class PDFToExcelConverter:
             r"(?P<quantidade>\d+[.,]\d+)"
             r"(?:\s*(?P<unidade>(?:[kK][gG]|[lL](?:itros?)?|UN)))?"
             r"\s+(?P<preco>\d+[.,]\d+)"
-            r"\s+(?P<impostos>IVA\s*\d+%?)"
+            r"(?:\s+(?P<impostos>IVA\s*\d+%?))?"  # Tornando o grupo dos impostos opcional
             r"\s+(?P<amount>\d+[.,]\d+\s*€)",
             flags=re.DOTALL | re.IGNORECASE
         )
@@ -135,9 +135,12 @@ class PDFToExcelConverter:
 
             preco = float(dados["preco"].replace(',', '.'))
 
-            impostos_text = dados["impostos"]
-            num_impostos = re.search(r'\d+[.,]?\d*', impostos_text)
-            impostos = float(num_impostos.group().replace(',', '.')) / 100.0 if num_impostos else 0.0
+            impostos_text = dados.get("impostos", "")
+            if impostos_text:
+                num_impostos = re.search(r'\d+[.,]?\d*', impostos_text)
+                impostos = float(num_impostos.group().replace(',', '.')) / 100.0 if num_impostos else 0.0
+            else:
+                impostos = 0.0
 
             amount = float(dados["amount"].replace('€', '').replace(',', '.'))
 
@@ -177,6 +180,10 @@ class PDFToExcelConverter:
             sheet.cell(row=current_row, column=6).value = produto["IMPOSTOS"]
             sheet.cell(row=current_row, column=7).value = produto["AMOUNT"]
             
+            for col in [3, 5, 6, 7]:
+                cell = sheet.cell(row=current_row, column=col)
+                cell.number_format = '#,##0.00'
+            
             if produto["DESCRIÇÃO_SECUNDARIA"]:
                 current_row += 1
                 sheet.cell(row=current_row, column=2).value = produto["DESCRIÇÃO_SECUNDARIA"]
@@ -189,12 +196,6 @@ class PDFToExcelConverter:
         
         for col in range(1, 8):
             sheet.column_dimensions[chr(64 + col)].width = 18
-            
-        for row in range(2, current_row, 3):
-            for col in [3, 5, 6, 7]:
-                cell = sheet.cell(row=row, column=col)
-                if cell.value is not None:
-                    cell.number_format = "#,##0.00"
         
         workbook.save(caminho_excel)
 
