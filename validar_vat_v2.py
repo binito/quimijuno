@@ -3,6 +3,8 @@ import requests
 import customtkinter as ctk
 import tkinter.filedialog as filedialog
 import threading
+import sys
+import os
 
 # Variável global para sinalizar paragem
 stop_flag = False
@@ -32,7 +34,7 @@ def validar_vat_uk_thirdparty(vat):
     É necessário registar-se em https://vatlayer.com/ para obter uma chave (access_key).
     """
     vat_converted = "GB" + vat[2:]
-    access_key = "YOUR_ACCESS_KEY"  # Substituir pela sua chave
+    access_key = "38eba532700f25cb9d6191ba121542aa"  # Substituir pela sua chave
     url = f"https://apilayer.net/api/validate?access_key={access_key}&vat_number={vat_converted}"
     try:
         response = requests.get(url, timeout=10)
@@ -140,6 +142,20 @@ def selecionar_ficheiro_destino():
 
 # Criação da janela principal
 root = ctk.CTk()
+
+ # Verifica se está a correr no executável PyInstaller (que gera a pasta _MEIPASS)
+if hasattr(sys, '_MEIPASS'):
+    icone_path = os.path.join(sys._MEIPASS, 'comsoftweb.ico')
+else:
+    # Caminho absoluto do .ico na pasta do script
+    icone_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'comsoftweb.ico')
+
+# Tentar carregar o ícone
+try:
+    root.iconbitmap(icone_path)
+except Exception as e:
+    print("Aviso: Não foi possível carregar o ícone. Erro:", e)
+
 root.title("Validação de VATs")
 root.geometry("600x580")
 
@@ -185,3 +201,4 @@ label_status = ctk.CTkLabel(root, text="")
 label_status.pack(pady=(10, 0))
 
 root.mainloop()
+
